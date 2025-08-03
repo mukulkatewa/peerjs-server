@@ -1,24 +1,22 @@
 const express = require("express");
-const { ExpressPeerServer } = require("peerjs");
+const { PeerServer } = require("peerjs"); // ✅ Correct import
 const cors = require("cors");
-const http = require("http");
 
 const app = express();
 app.use(cors());
 
-const server = http.createServer(app);
+const PORT = process.env.PORT || 9000;
 
-const peerServer = ExpressPeerServer(server, {
-  debug: true,
-  path: "/myapp"
+// ✅ Set up PeerJS server directly (no express wrapper needed)
+const peerServer = PeerServer({
+  port: PORT,
+  path: "/myapp",
+  corsOptions: {
+    origin: '*'
+  }
 });
 
-app.use("/peerjs", peerServer);
-
-// ✅ Add health check route for Render
-app.get("/", (req, res) => res.send("🟢 PeerJS server is running"));
-
-const PORT = process.env.PORT || 9000;
-server.listen(PORT, () => {
-  console.log(`✅ PeerJS server running on http://localhost:${PORT}`);
+// ✅ Health check (Render requires it)
+peerServer.on("connection", (client) => {
+  console.log("New Peer connected:", client.getId());
 });
